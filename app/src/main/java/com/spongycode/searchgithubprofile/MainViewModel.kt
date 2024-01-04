@@ -89,7 +89,7 @@ class MainViewModel : ViewModel() {
             install(Auth) {
                 bearer {
                     loadTokens {
-                        BearerTokens("TOKEN_HERE", "")
+                        BearerTokens("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", "")
                     }
                 }
             }
@@ -97,10 +97,10 @@ class MainViewModel : ViewModel() {
     }
 
     sealed class QueryState {
-        object Idle : QueryState()
-        object Checking : QueryState()
-        object Found : QueryState()
-        object NotFound : QueryState()
-        object Error : QueryState()
+        data object Idle : QueryState()
+        data object Checking : QueryState()
+        data object Found : QueryState()
+        data object NotFound : QueryState()
+        data object Error : QueryState()
     }
 }
