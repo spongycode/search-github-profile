@@ -65,15 +65,13 @@ class MainViewModel : ViewModel() {
                     url("${BASE_URL}users/${freshEndpoint}")
                 }
                 val resBody: List<Profile> = response.body<List<Profile>>()
-                if (resBody.isNotEmpty()) {
-                    val updatedProfile = _profileResultDatabase.value?.get(username)?.copy(
-                        followers_list = resBody
-                    )
-                    _profileResultDatabase.value =
-                        _profileResultDatabase.value!!.toMutableMap().apply {
-                            put(username, updatedProfile!!)
-                        }.toMap()
-                }
+                val updatedProfile = _profileResultDatabase.value?.get(username)?.copy(
+                    followers_list = resBody
+                )
+                _profileResultDatabase.value =
+                    _profileResultDatabase.value!!.toMutableMap().apply {
+                        put(username, updatedProfile!!)
+                    }.toMap()
                 client.close()
             } catch (_: Exception) {
             }

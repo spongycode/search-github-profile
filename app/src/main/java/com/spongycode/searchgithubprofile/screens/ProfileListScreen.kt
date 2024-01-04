@@ -39,7 +39,7 @@ fun ProfileListScreen(viewModel: MainViewModel, endpoint: String, navController:
                 .fillMaxWidth()
                 .padding(top = it.calculateTopPadding(), start = 5.dp, end = 5.dp)
         ) {
-            if (!(observer.value?.get(username)?.followers_list.isNullOrEmpty())) {
+            if (observer.value?.get(username)?.followers_list != null) {
                 items(observer.value?.get(username)?.followers_list!!) { profile ->
                     ProfileItem(profile, navController)
                 }

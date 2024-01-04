@@ -36,8 +36,8 @@ data class Profile(
     val following: Int = 0,
     val created_at: String = "",
     val updated_at: String = "",
-    val followers_list: List<Profile> = emptyList(),
-    val following_list: List<Profile> = emptyList(),
+    val followers_list: List<Profile>? = null,
+    val following_list: List<Profile>? = null,
     val message: String = "",
     val documentation_url: String = ""
 )
