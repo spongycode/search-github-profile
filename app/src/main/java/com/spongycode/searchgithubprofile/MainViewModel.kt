@@ -5,22 +5,17 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.spongycode.searchgithubprofile.data.model.Profile
-import io.ktor.client.HttpClient
-import io.ktor.client.call.body
-import io.ktor.client.engine.cio.CIO
-import io.ktor.client.plugins.auth.Auth
-import io.ktor.client.plugins.auth.providers.BearerTokens
-import io.ktor.client.plugins.auth.providers.bearer
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.client.request.get
-import io.ktor.client.request.url
-import io.ktor.client.statement.HttpResponse
-import io.ktor.serialization.kotlinx.json.json
+import com.spongycode.searchgithubprofile.domain.repository.MyRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class MainViewModel : ViewModel() {
 
-    private val BASE_URL = "https://api.github.com/"
+@HiltViewModel
+class MainViewModel @Inject constructor(
+    private val repository: MyRepository
+) : ViewModel() {
+
     private val _queryState = MutableLiveData<QueryState>(QueryState.Idle)
     val queryState: LiveData<QueryState> = _queryState
 
@@ -30,25 +25,24 @@ class MainViewModel : ViewModel() {
     fun makeProfileQuery(text: String, search: Boolean = false) {
         val username = text.trim()
         viewModelScope.launch {
+            if (search) _queryState.value = QueryState.Checking
             try {
-                if (search) _queryState.value = QueryState.Checking
-                val client = createHttpClient()
-                val response: HttpResponse = client.get {
-                    url("${BASE_URL}users/${username}")
-                }
-                val resBody: Profile = response.body<Profile>()
-                if (resBody.login.isNotBlank()) {
-                    _profileResultDatabase.value =
-                        _profileResultDatabase.value!!.toMutableMap().apply {
-                            put(username, resBody)
-                        }.toMap()
-                    if (search) {
-                        _queryState.value = QueryState.Found
-                    }
+                val profile = repository.makeProfileQuery(text)
+                if (profile == null) {
+                    if (search) _queryState.value = QueryState.Error
                 } else {
-                    if (search) _queryState.value = QueryState.NotFound
+                    if (profile.login.isNotBlank()) {
+                        _profileResultDatabase.value =
+                            _profileResultDatabase.value!!.toMutableMap().apply {
+                                put(username, profile)
+                            }.toMap()
+                        if (search) {
+                            _queryState.value = QueryState.Found
+                        }
+                    } else {
+                        if (search) _queryState.value = QueryState.NotFound
+                    }
                 }
-                client.close()
             } catch (e: Exception) {
                 if (search) _queryState.value = QueryState.Error
             }
@@ -57,41 +51,19 @@ class MainViewModel : ViewModel() {
 
     fun populateFollowersList(endpoint: String) {
         val username = endpoint.split(".").firstOrNull().toString()
-        val freshEndpoint = endpoint.replace(".", "/")
         viewModelScope.launch {
             try {
-                val client = createHttpClient()
-                val response: HttpResponse = client.get {
-                    url("${BASE_URL}users/${freshEndpoint}")
+                val result = repository.populateFollowersList(endpoint)
+                if (result != null) {
+                    val updatedProfile = _profileResultDatabase.value?.get(username)?.copy(
+                        followers_list = result
+                    )
+                    _profileResultDatabase.value =
+                        _profileResultDatabase.value!!.toMutableMap().apply {
+                            put(username, updatedProfile!!)
+                        }.toMap()
                 }
-                val resBody: List<Profile> = response.body<List<Profile>>()
-                val updatedProfile = _profileResultDatabase.value?.get(username)?.copy(
-                    followers_list = resBody
-                )
-                _profileResultDatabase.value =
-                    _profileResultDatabase.value!!.toMutableMap().apply {
-                        put(username, updatedProfile!!)
-                    }.toMap()
-                client.close()
             } catch (_: Exception) {
-            }
-        }
-    }
-
-    private fun createHttpClient(): HttpClient {
-        return HttpClient(CIO) {
-            install(ContentNegotiation) {
-                json(kotlinx.serialization.json.Json {
-                    ignoreUnknownKeys = true
-                    coerceInputValues = true
-                })
-            }
-            install(Auth) {
-                bearer {
-                    loadTokens {
-                        BearerTokens("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", "")
-                    }
-                }
             }
         }
     }

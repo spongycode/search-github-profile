@@ -69,7 +69,11 @@ fun SearchBar(viewModel: MainViewModel, navController: NavController) {
                 .fillMaxWidth()
                 .background(MaterialTheme.colorScheme.background),
             shape = RoundedCornerShape(28),
-            keyboardActions = KeyboardActions(onDone = { keyboardController?.hide() }),
+            keyboardActions = KeyboardActions(onDone = {
+                viewModel.makeProfileQuery(text.text, true)
+                keyboardController?.hide()
+                focusManager.clearFocus()
+            }),
             colors = TextFieldDefaults.colors(
                 focusedIndicatorColor = MaterialTheme.colorScheme.primary,
                 unfocusedIndicatorColor = Color.LightGray,

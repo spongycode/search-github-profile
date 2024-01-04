@@ -25,7 +25,7 @@ fun TopBar(navController: NavController, title: String) {
             Text(
                 color = MaterialTheme.colorScheme.primary,
                 text = title,
-                fontSize = 20.sp,
+                fontSize = 18.sp,
                 fontWeight = FontWeight.W500
             )
         },
