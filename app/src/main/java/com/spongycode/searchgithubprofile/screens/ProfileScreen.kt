@@ -7,7 +7,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -28,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -74,6 +77,7 @@ fun ProfileComponent(viewModel: MainViewModel, username: String, navController: 
             model = count.value?.get(username)?.avatar_url,
             contentDescription = null
         )
+        Spacer(modifier = Modifier.height(20.dp))
         if (!(count.value?.get(username)?.name.isNullOrBlank())) {
             Text(
                 text = count.value?.get(username)?.name!!,
@@ -88,12 +92,15 @@ fun ProfileComponent(viewModel: MainViewModel, username: String, navController: 
             color = Color.Gray
         )
         if (!(count.value?.get(username)?.bio.isNullOrBlank())) {
+            Spacer(modifier = Modifier.height(10.dp))
             Text(
+                textAlign = TextAlign.Center,
                 text = count.value?.get(username)?.bio.toString(),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.W400
             )
         }
+        Spacer(modifier = Modifier.height(10.dp))
         Row {
             Box(modifier = Modifier.clickable {
                 navController.navigate("profileList/${username}.followers")
@@ -148,7 +155,7 @@ fun TopBar(navController: NavController, title: String) {
 
         },
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.background
+            containerColor = Color(0xFFFDFAFA)
         )
     )
 }

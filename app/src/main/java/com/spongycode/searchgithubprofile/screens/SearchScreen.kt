@@ -6,13 +6,14 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.OutlinedTextField
@@ -32,10 +33,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.font.FontWeight.Companion.W400
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -50,6 +53,7 @@ fun SearchScreen(viewModel: MainViewModel, navController: NavController) {
     Column(
         Modifier
             .fillMaxHeight()
+            .padding(10.dp)
             .background(colorScheme.background),
         verticalArrangement = Arrangement.Top
     ) {
@@ -57,43 +61,6 @@ fun SearchScreen(viewModel: MainViewModel, navController: NavController) {
     }
 }
 
-
-@Composable
-fun ProfileItem(profile: Profile, navController: NavController) {
-    Row(
-        Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Box {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                AsyncImage(
-                    model = profile.avatar_url,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(100.dp))
-                        .size(75.dp),
-                    contentDescription = null
-                )
-                Column(Modifier.padding(start = 20.dp)) {
-                    Text(
-                        text = profile.name, fontSize = 20.sp, fontWeight = FontWeight.W600
-                    )
-                    Text(
-                        text = profile.login,
-                        fontSize = 18.sp,
-                        fontWeight = W400,
-                        color = Color.Gray
-                    )
-                }
-            }
-        }
-        Button(onClick = {
-            navController.navigate("profile/${profile.login}")
-        }) {
-            Text(text = "Visit")
-        }
-    }
-}
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -122,7 +89,7 @@ fun SearchBar(viewModel: MainViewModel, navController: NavController) {
             unfocusedContainerColor = colorScheme.background,
             cursorColor = colorScheme.primary
         ),
-        maxLines = 5,
+        maxLines = 1,
         trailingIcon = {
             Box(
                 modifier = Modifier.padding(end = 10.dp), contentAlignment = Alignment.Center
@@ -133,7 +100,7 @@ fun SearchBar(viewModel: MainViewModel, navController: NavController) {
                     modifier = Modifier
                         .size(30.dp)
                         .clickable {
-                            viewModel.makeProfileQuery(text.text)
+                            viewModel.makeProfileQuery(text.text, true)
                             keyboardController?.hide()
                             focusManager.clearFocus()
                         },
@@ -147,12 +114,58 @@ fun SearchBar(viewModel: MainViewModel, navController: NavController) {
         )
     )
 
-
-    val observer = viewModel.profileResultDatabase.observeAsState()
+    Spacer(modifier = Modifier.height(10.dp))
+    val queryStateObserver = viewModel.queryState.observeAsState()
     Column(modifier = Modifier.padding(10.dp)) {
-        if (observer.value?.get(text.text)?.login?.isNotBlank() == true) {
-            viewModel.profileResultDatabase.value?.get(text.text)
+        when (queryStateObserver.value) {
+            MainViewModel.QueryState.Checking -> HelperText(text = stringResource(R.string.checking))
+            MainViewModel.QueryState.Error -> HelperText(text = stringResource(R.string.error))
+            MainViewModel.QueryState.NotFound -> HelperText(text = stringResource(R.string.user_not_found))
+            MainViewModel.QueryState.Found -> viewModel.profileResultDatabase.value?.get(text.text)
                 ?.let { ProfileItem(it, navController) }
+
+            else -> {}
+        }
+    }
+}
+
+@Composable
+fun HelperText(text: String) {
+    Text(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 30.dp),
+        textAlign = TextAlign.Center,
+        text = text
+    )
+}
+
+@Composable
+fun ProfileItem(profile: Profile, navController: NavController) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .padding(10.dp)
+            .clickable { navController.navigate("profile/${profile.login}") },
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        AsyncImage(
+            model = profile.avatar_url,
+            modifier = Modifier
+                .clip(RoundedCornerShape(100.dp))
+                .size(65.dp),
+            contentDescription = null
+        )
+        Column(Modifier.padding(start = 20.dp)) {
+            if (profile.name.isNotBlank()) {
+                Text(text = profile.name, fontSize = 20.sp, fontWeight = FontWeight.W600)
+            }
+            Text(
+                text = profile.login,
+                fontSize = 18.sp,
+                fontWeight = W400,
+                color = Color.Gray
+            )
         }
     }
 }

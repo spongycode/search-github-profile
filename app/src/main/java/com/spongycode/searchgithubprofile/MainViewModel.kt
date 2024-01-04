@@ -20,20 +20,20 @@ import kotlinx.coroutines.launch
 
 class MainViewModel : ViewModel() {
 
-
-    private val _profileResultState = MutableLiveData<ValidationState>(ValidationState.Idle)
-    val profileResultState: LiveData<ValidationState> = _profileResultState
+    private val BASE_URL = "https://api.github.com/"
+    private val _queryState = MutableLiveData<QueryState>(QueryState.Idle)
+    val queryState: LiveData<QueryState> = _queryState
 
     private val _profileResultDatabase = MutableLiveData<Map<String, Profile>>(mutableMapOf())
     val profileResultDatabase: LiveData<Map<String, Profile>> = _profileResultDatabase
 
-    fun makeProfileQuery(username: String) {
+    fun makeProfileQuery(username: String, search: Boolean = false) {
         viewModelScope.launch {
             try {
-                _profileResultState.value = ValidationState.Checking
+                if (search) _queryState.value = QueryState.Checking
                 val client = createHttpClient()
                 val response: HttpResponse = client.get {
-                    url("https://api.github.com/users/${username}")
+                    url("${BASE_URL}users/${username}")
                 }
                 val resBody: Profile = response.body<Profile>()
                 if (resBody.login.isNotBlank()) {
@@ -41,11 +41,15 @@ class MainViewModel : ViewModel() {
                         _profileResultDatabase.value!!.toMutableMap().apply {
                             put(username, resBody)
                         }.toMap()
-                    _profileResultState.value = ValidationState.Valid
+                    if (search) {
+                        _queryState.value = QueryState.Found
+                    }
+                } else {
+                    if (search) _queryState.value = QueryState.NotFound
                 }
                 client.close()
             } catch (e: Exception) {
-                _profileResultState.value = ValidationState.Invalid
+                if (search) _queryState.value = QueryState.Error
             }
         }
     }
@@ -55,10 +59,9 @@ class MainViewModel : ViewModel() {
         val freshEndpoint = endpoint.replace(".", "/")
         viewModelScope.launch {
             try {
-                _profileResultState.value = ValidationState.Checking
                 val client = createHttpClient()
                 val response: HttpResponse = client.get {
-                    url("https://api.github.com/users/${freshEndpoint}")
+                    url("${BASE_URL}users/${freshEndpoint}")
                 }
                 val resBody: List<Profile> = response.body<List<Profile>>()
                 if (resBody.isNotEmpty()) {
@@ -71,8 +74,7 @@ class MainViewModel : ViewModel() {
                         }.toMap()
                 }
                 client.close()
-            } catch (e: Exception) {
-                _profileResultState.value = ValidationState.Invalid
+            } catch (_: Exception) {
             }
         }
     }
@@ -95,11 +97,11 @@ class MainViewModel : ViewModel() {
         }
     }
 
-
-    sealed class ValidationState {
-        object Idle : ValidationState()
-        object Checking : ValidationState()
-        object Valid : ValidationState()
-        object Invalid : ValidationState()
+    sealed class QueryState {
+        object Idle : QueryState()
+        object Checking : QueryState()
+        object Found : QueryState()
+        object NotFound : QueryState()
+        object Error : QueryState()
     }
 }
