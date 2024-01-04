@@ -2,4 +2,9 @@
 <resources>
 
     <style name="Theme.SearchGithubProfile" parent="android:Theme.Material.Light.NoActionBar" />
+
+
+    <style name="Theme.SplashScreen" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@drawable/splash_screen</item>
+    </style>
 </resources>

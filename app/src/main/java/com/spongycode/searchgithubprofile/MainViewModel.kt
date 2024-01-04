@@ -27,7 +27,8 @@ class MainViewModel : ViewModel() {
     private val _profileResultDatabase = MutableLiveData<Map<String, Profile>>(mutableMapOf())
     val profileResultDatabase: LiveData<Map<String, Profile>> = _profileResultDatabase
 
-    fun makeProfileQuery(username: String, search: Boolean = false) {
+    fun makeProfileQuery(text: String, search: Boolean = false) {
+        val username = text.trim()
         viewModelScope.launch {
             try {
                 if (search) _queryState.value = QueryState.Checking

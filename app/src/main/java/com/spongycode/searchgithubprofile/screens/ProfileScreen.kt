@@ -155,7 +155,7 @@ fun TopBar(navController: NavController, title: String) {
 
         },
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = Color(0xFFFDFAFA)
+            containerColor = MaterialTheme.colorScheme.primaryContainer
         )
     )
 }
